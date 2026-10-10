@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suivi MET</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f7d5b">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--tx:#1f2a24;--mut:#667068;--ac:#2f7d5b;--ac2:#dfeee6;--bd:#dde2dc;--warn:#b25b1e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151a17;--card:#1e2521;--tx:#e8ede9;--mut:#9aa59d;--ac:#5fc294;--ac2:#243b2f;--bd:#2f3832;--warn:#e59a5c}}
+:root[data-theme="dark"]{--bg:#151a17;--card:#1e2521;--tx:#e8ede9;--mut:#9aa59d;--ac:#5fc294;--ac2:#243b2f;--bd:#2f3832;--warn:#e59a5c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:4px 0 2px}
+.sub{color:var(--mut);font-size:.9rem;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:1rem;margin:0 0 10px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+button,input,select{font:inherit;color:var(--tx)}
+button{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:9px 14px;cursor:pointer}
+button.ghost{background:transparent;color:var(--ac);border:1px solid var(--bd)}
+button.del{background:transparent;color:var(--mut);padding:4px 8px;font-size:1.1rem}
+input,select{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px;width:100%}
+label{display:block;font-size:.8rem;color:var(--mut);margin-bottom:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+.big{font-size:2rem;font-weight:700;color:var(--ac)}
+.bar{height:12px;background:var(--ac2);border-radius:8px;overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;background:var(--ac)}
+.days{display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:8px}
+.day{flex:1;text-align:center;font-size:.72rem;color:var(--mut);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.day i{display:block;background:var(--ac);border-radius:5px 5px 0 0;min-height:2px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--bd)}
+.row small{color:var(--mut)}
+.tag{font-size:.7rem;border-radius:6px;padding:1px 6px;background:var(--ac2);color:var(--ac);margin-left:4px}
+.note{font-size:.78rem;color:var(--mut)}
+.inl{display:flex;gap:8px;align-items:center}
+</style>
+</head>
+<body>
+<main>
+<h1>Suivi MET</h1>
+<p class="sub">Vos activités de la semaine, converties en MET-minutes.</p>
+
+<div class="card">
+  <h2>Mon profil <span class="note">(à renseigner une seule fois)</span></h2>
+  <div class="grid">
+    <div><label for="wt">Poids (kg)</label><input id="wt" type="number" min="30" step="0.5"></div>
+    <div><label for="goal">Objectif hebdo (MET-min)</label><input id="goal" type="number" min="0" step="50"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="nav">
+    <button class="ghost" id="prev" aria-label="Semaine précédente">←</button>
+    <strong id="weekLabel"></strong>
+    <button class="ghost" id="next" aria-label="Semaine suivante">→</button>
+  </div>
+  <div style="margin-top:12px"><span class="big" id="total">0</span> <span class="note">MET-min cette semaine</span></div>
+  <div class="bar"><i id="prog" style="width:0%"></i></div>
+  <p class="note" id="goalTxt" style="margin:0"></p>
+  <div class="days" id="days"></div>
+  <p class="note" id="split" style="margin-top:10px"></p>
+</div>
+
+<div class="card">
+  <h2>Ajouter une activité</h2>
+  <div class="grid">
+    <div class="full"><label for="act">Activité</label><select id="act"></select></div>
+    <div><label for="met">Valeur MET</label><input id="met" type="number" step="0.1" min="0.8"></div>
+    <div><label for="dur">Durée (minutes)</label><input id="dur" type="number" min="1" value="30"></div>
+    <div class="full"><label for="date">Date</label><input id="date" type="date"></div>
+    <div class="full" id="customName" style="display:none"><label for="cname">Nom de l'activité personnalisée</label><input id="cname" type="text" placeholder="Ex. : kinésithérapie"></div>
+    <div class="full"><button id="add">Ajouter</button></div>
+  </div>
+  <p class="note" style="margin-top:10px">Valeurs indicatives tirées du Compendium of Physical Activities (adultes). Vous pouvez modifier le MET ou choisir « Autre » si votre professionnel de santé vous en indique un.</p>
+</div>
+
+<div class="card">
+  <h2>Activités de la semaine</h2>
+  <div id="list"></div>
+</div>
+
+<div class="card">
+  <h2>Sauvegarde</h2>
+  <div class="inl"><button class="ghost" id="exp">Exporter mes données</button><button class="ghost" id="impBtn">Importer</button></div>
+  <input id="imp" type="file" accept=".json,application/json" hidden>
+  <p class="note" style="margin:8px 0 0">Le fichier exporté (.json) permet de transférer vos données vers un autre appareil ou de les restaurer.</p>
+</div>
+
+<p class="note">Formule : MET × durée (min) = MET-minutes (indépendant du poids). Les kcal sont des estimations « au-dessus du repos » : (MET − 1) × poids × heures, probablement un peu surévaluées à masse corporelle élevée. Seuils : léger &lt; 3 · modéré 3 à 5,9 · soutenu ≥ 6. Cet outil n'est pas un avis médical : suivez les consignes de votre ergothérapeute ou de votre médecin.</p>
+</main>
+
+<script>
+const ACTS=[
+["Marche lente (3 km/h)",2.8],["Marche normale (5 km/h)",3.5],["Marche rapide (6,5 km/h)",5.0],
+["Vélo, balade tranquille",4.0],["Vélo, allure soutenue",7.5],["Natation, tranquille",6.0],["Aquagym",5.3],["Vélo d'appartement léger",3.5],
+["Course à pied (8 km/h)",8.3],["Étirements",2.3],["Yoga (hatha)",2.5],["Renforcement musculaire léger",3.5],
+["Renforcement musculaire soutenu",6.0],["Danse de salon lente",3.0],["Danse, générale",5.0],["Escaliers (montée lente)",4.0],
+["Ménage léger",2.3],["Passer l'aspirateur",3.3],["Serpillière / sols",3.5],["Jardinage",3.8],["Faire les courses à pied",2.3],
+["Cuisiner",1.8],["Vaisselle",1.8],["Assis, au repos",1.3]];
+const $=id=>document.getElementById(id);
+let S={entries:[],goal:600,weight:115},offset=0;
+try{const r=localStorage.getItem("suivi-met");if(r){const o=JSON.parse(r);if(o&&Array.isArray(o.entries))S=Object.assign(S,o)}}catch(e){}
+function save(){try{localStorage.setItem("suivi-met",JSON.stringify(S))}catch(e){}}
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function monday(off){const d=new Date();d.setHours(12,0,0,0);const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w+off*7);return d}
+const fmt=(d,o)=>d.toLocaleDateString("fr-FR",o);
+const lvl=m=>m>=6?"soutenu":m>=3?"modéré":"léger";
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+$("act").innerHTML=ACTS.map((a,i)=>`<option value="${i}">${a[0]}</option>`).join("")+`<option value="x">Autre (personnalisée)…</option>`;
+function syncAct(){const v=$("act").value;$("customName").style.display=v==="x"?"block":"none";if(v!=="x")$("met").value=ACTS[v][1]}
+$("act").onchange=syncAct;syncAct();
+$("date").value=iso(new Date());
+
+$("add").onclick=()=>{
+  const v=$("act").value,met=parseFloat($("met").value),min=parseFloat($("dur").value),date=$("date").value;
+  let name=v==="x"?$("cname").value.trim():ACTS[v][0];
+  if(!name||!(met>0)||!(min>0)||!date){alert("Vérifiez l'activité, le MET, la durée et la date.");return}
+  S.entries.push({id:Date.now(),date,name,met,min});save();
+  const d=new Date(date+"T12:00:00"),m=monday(0);
+  offset=Math.floor((d-m)/604800000);
+  render();
+};
+$("prev").onclick=()=>{offset--;render()};$("next").onclick=()=>{offset++;render()};
+$("wt").onchange=()=>{const w=parseFloat($("wt").value);if(w>0){S.weight=w;save()}render()};
+$("goal").onchange=()=>{const g=parseFloat($("goal").value);S.goal=g>0?g:0;save();render()};
+
+function render(){
+  const start=monday(offset),end=new Date(start);end.setDate(end.getDate()+6);
+  $("weekLabel").textContent=fmt(start,{day:"numeric",month:"short"})+" – "+fmt(end,{day:"numeric",month:"short",year:"numeric"});
+  const keys=[...Array(7)].map((_,i)=>{const d=new Date(start);d.setDate(d.getDate()+i);return iso(d)});
+  const es=S.entries.filter(e=>keys.includes(e.date)).sort((a,b)=>a.date<b.date?1:-1);
+  const perDay=keys.map(k=>es.filter(e=>e.date===k).reduce((s,e)=>s+e.met*e.min,0));
+  const total=perDay.reduce((a,b)=>a+b,0);
+  $("total").textContent=Math.round(total);
+  $("goal").value=S.goal;$("wt").value=S.weight;
+  const kc=e=>(e.met-1)*S.weight*e.min/60;const kcal=es.reduce((a,e)=>a+kc(e),0);
+  const pct=S.goal>0?Math.min(100,total/S.goal*100):0;
+  $("prog").style.width=pct+"%";
+  $("goalTxt").textContent=S.goal>0?`Objectif : ${Math.round(total)} / ${S.goal} MET-min (${Math.round(pct)} %)`:"Aucun objectif défini (voir Mon profil)";
+  const mx=Math.max(1,...perDay);
+  $("days").innerHTML=perDay.map((v,i)=>{const d=new Date(keys[i]+"T12:00:00");
+    return `<div class="day"><i style="height:${v/mx*100*0.7}%"></i>${fmt(d,{weekday:"narrow"})}</div>`}).join("");
+  const by={léger:0,modéré:0,soutenu:0};es.forEach(e=>by[lvl(e.met)]+=e.min);
+  $("split").textContent=`Minutes par intensité — léger : ${by.léger} · modéré : ${by.modéré} · soutenu : ${by.soutenu} · ≈ ${Math.round(kcal)} kcal au-dessus du repos`;
+  $("list").innerHTML=es.length?es.map(e=>`<div class="row"><div><strong>${esc(e.name)}</strong><span class="tag">${lvl(e.met)}</span><br><small>${fmt(new Date(e.date+"T12:00:00"),{weekday:"short",day:"numeric",month:"short"})} · ${e.min} min × ${e.met} MET = ${Math.round(e.met*e.min)} MET-min · ≈ ${Math.round(kc(e))} kcal</small></div><button class="del" data-id="${e.id}" aria-label="Supprimer">✕</button></div>`).join(""):`<p class="note">Aucune activité enregistrée cette semaine.</p>`;
+  document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{S.entries=S.entries.filter(e=>String(e.id)!==b.dataset.id);save();render()});
+}
+$("exp").onclick=()=>{const b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="suivi-met-sauvegarde-"+iso(new Date())+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("impBtn").onclick=()=>$("imp").click();
+$("imp").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||!Array.isArray(o.entries))throw 0;const ok=o.entries.filter(x=>x&&x.date&&x.name&&x.met>0&&x.min>0);if(!confirm("Remplacer les données actuelles par cette sauvegarde ("+ok.length+" activités) ?"))return;S={entries:ok,goal:o.goal>=0?o.goal:600,weight:o.weight>0?o.weight:115};save();render()}catch(x){alert("Fichier de sauvegarde invalide.")}};r.readAsText(f);e.target.value=""};
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+render();
+</script>
+</body>
+</html>
